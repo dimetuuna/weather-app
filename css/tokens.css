@@ -1,0 +1,102 @@
+/*
+ * tokens.css — design tokens (colors, typography, spacing, radii, shadows)
+ * plus the self-hosted @font-face declarations for DM Sans and Bricolage Grotesque.
+ */
+
+/* ---------- Fonts ---------- */
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('../assets/fonts/DM_Sans/DMSans-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('../assets/fonts/DM_Sans/DMSans-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 1000;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('../assets/fonts/Bricolage_Grotesque/static/BricolageGrotesque-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Colors ---------- */
+
+:root {
+  /* Neutral */
+  --color-neutral-900: hsl(243 96% 9%);
+  --color-neutral-800: hsl(243 27% 20%);
+  --color-neutral-700: hsl(243 23% 24%);
+  --color-neutral-600: hsl(243 23% 30%);
+  --color-neutral-300: hsl(240 6% 70%);
+  --color-neutral-200: hsl(250 6% 84%);
+  --color-neutral-0: hsl(0 0% 100%);
+
+  /* Accents */
+  --color-orange-500: hsl(28 100% 52%);
+  --color-blue-500: hsl(233 67% 56%);
+  --color-blue-700: hsl(248 70% 36%);
+
+  /* Semantic aliases */
+  --color-bg: var(--color-neutral-900);
+  --color-surface: var(--color-neutral-800);
+  --color-surface-strong: var(--color-neutral-700);
+  --color-text: var(--color-neutral-0);
+  --color-text-muted: var(--color-neutral-200);
+  --color-accent: var(--color-blue-500);
+  --color-accent-strong: var(--color-blue-700);
+  --color-hero-gradient: linear-gradient(135deg, var(--color-blue-500) 0%, var(--color-blue-700) 100%);
+  --color-focus-ring: var(--color-blue-500);
+}
+
+/* ---------- Typography ---------- */
+
+:root {
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
+
+  --font-size-base: 1.125rem; /* 18px body copy, per the style guide */
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.5rem;
+  --font-size-xl: 2.5rem;
+
+  --line-height-tight: 1.1;
+  --line-height-base: 1.5;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+}
+
+/* ---------- Spacing, radii, shadows ---------- */
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.5rem;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 0.25rem 0.75rem hsl(243 96% 9% / 40%);
+
+  --content-width: 75rem;
+}

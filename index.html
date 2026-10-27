@@ -1,66 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- displays site properly based on user's device -->
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Weather Now — current conditions, 7-day and hourly forecasts powered by Open-Meteo." />
 
-  <link rel="icon" type="image/png" sizes="32x32" href="./assets/images/favicon-32x32.png">
-  
-  <title>Frontend Mentor | Weather app</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
 
-  <!-- Feel free to remove these styles or customise in your own stylesheet 👍 -->
-  <style>
-    .attribution { font-size: 0.6875rem; text-align: center; }
-    .attribution a { color: hsl(228, 45%, 44%); }
-  </style>
-</head>
-<body>
+    <title>Weather Now</title>
 
-  Units
+    <link rel="stylesheet" href="/css/reset.css" />
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/layout.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
 
-  Switch to Imperial/Metric
+    <div class="app">
+      <header class="app__header">
+        <a class="brand" href="/">
+          <img class="brand__logo" src="/assets/images/logo.svg" alt="Weather Now" width="197" height="40" />
+        </a>
 
-  Temperature
+        <!-- Units dropdown: the custom menu behaviour is implemented in a later task. -->
+        <div class="units" data-units>
+          <button
+            class="units__toggle"
+            type="button"
+            id="units-toggle"
+            data-units-toggle
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="units-menu"
+          >
+            <img class="units__icon" src="/assets/images/icon-units.svg" alt="" width="18" height="18" aria-hidden="true" />
+            <span class="units__label">Units</span>
+            <img class="units__chevron" src="/assets/images/icon-dropdown.svg" alt="" width="14" height="14" aria-hidden="true" />
+          </button>
 
-  Celsius (°C)
-  Fahrenheit (°F)
+          <ul class="units__menu" id="units-menu" role="listbox" aria-label="Measurement units" hidden>
+            <li class="units__option" role="option" aria-selected="true" data-units-option="metric">Metric</li>
+            <li class="units__option" role="option" aria-selected="false" data-units-option="imperial">Imperial</li>
+          </ul>
+        </div>
+      </header>
 
-  Wind Speed
+      <main class="app__main" id="main-content">
+        <p class="status" data-status role="status" aria-live="polite" hidden></p>
 
-  km/h
-  mph
+        <section class="hero" aria-labelledby="hero-title">
+          <h1 class="hero__title" id="hero-title">How's the sky looking today?</h1>
 
-  Precipitation
+          <form class="search" data-search-form role="search" autocomplete="off">
+            <label class="visually-hidden" for="search-input">Search for a place</label>
 
-  Millimeters (mm)
-  Inches (in)
+            <div class="search__field">
+              <img class="search__icon" src="/assets/images/icon-search.svg" alt="" width="20" height="20" aria-hidden="true" />
+              <input
+                class="search__input"
+                id="search-input"
+                name="query"
+                type="search"
+                placeholder="Search for a place..."
+                role="combobox"
+                aria-expanded="false"
+                aria-haspopup="listbox"
+                aria-autocomplete="list"
+                aria-controls="search-suggestions"
+                data-search-input
+              />
+            </div>
 
-  How's the sky looking today?
+            <button class="button search__submit" type="submit">Search</button>
 
-  Search for a city, e.g., New York
-  Search
+            <ul class="search__suggestions" id="search-suggestions" role="listbox" aria-label="Search suggestions" data-search-suggestions hidden></ul>
+          </form>
+        </section>
 
-  Feels like
-  <!-- Insert temperature here -->
+        <section class="current" aria-labelledby="current-title">
+          <h2 class="visually-hidden" id="current-title">Current weather</h2>
 
-  Humidity
-  <!-- Insert humidity here -->
+          <article class="current__card">
+            <div class="current__meta">
+              <h3 class="current__location" data-current-location>Current location</h3>
+              <p class="current__date" data-current-date></p>
+            </div>
 
-  Wind
-  <!-- Insert wind here -->   
-  
-  Precipitation
-  <!-- Insert precipitation here -->
+            <div class="current__reading">
+              <img
+                class="current__icon"
+                src="/assets/images/icon-sunny.webp"
+                alt=""
+                width="64"
+                height="64"
+                data-current-icon
+              />
+              <p class="current__temperature" data-current-temperature></p>
+            </div>
 
-  Daily forecast
-  <!-- Insert daily forecast for the next 7 days here -->
+            <p class="current__description" data-current-description></p>
+          </article>
+        </section>
 
-  Hourly forecast
-  <!-- Insert hourly forecast for the selected day here -->
+        <section class="metrics" aria-labelledby="metrics-title">
+          <h2 class="visually-hidden" id="metrics-title">Additional metrics</h2>
 
-  <footer class="attribution">
-    Challenge by <a href="https://www.frontendmentor.io?ref=challenge">Frontend Mentor</a>. 
-    Coded by <a href="#">Your Name Here</a>.
-  </footer>
-</body>
+          <ul class="metrics__grid">
+            <li class="metric">
+              <span class="metric__label">Feels Like</span>
+              <span class="metric__value" data-metric="feels-like"></span>
+            </li>
+            <li class="metric">
+              <span class="metric__label">Humidity</span>
+              <span class="metric__value" data-metric="humidity"></span>
+            </li>
+            <li class="metric">
+              <span class="metric__label">Wind</span>
+              <span class="metric__value" data-metric="wind"></span>
+            </li>
+            <li class="metric">
+              <span class="metric__label">Precipitation</span>
+              <span class="metric__value" data-metric="precipitation"></span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="daily" aria-labelledby="daily-title">
+          <h2 class="daily__title" id="daily-title">Daily forecast</h2>
+
+          <ul class="daily__list" data-daily-list></ul>
+        </section>
+
+        <section class="hourly" aria-labelledby="hourly-title">
+          <div class="hourly__header">
+            <h2 class="hourly__title" id="hourly-title">Hourly forecast</h2>
+
+            <label class="visually-hidden" for="hourly-day">Select forecast day</label>
+            <select class="hourly__select" id="hourly-day" data-hourly-day></select>
+          </div>
+
+          <ul class="hourly__list" data-hourly-list></ul>
+        </section>
+      </main>
+
+      <footer class="app__footer">
+        <p class="attribution">
+          Challenge by <a href="https://www.frontendmentor.io?ref=challenge">Frontend Mentor</a>. Weather data by
+          <a href="https://open-meteo.com/">Open-Meteo</a>.
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="/js/app.js"></script>
+  </body>
 </html>

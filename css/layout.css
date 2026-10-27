@@ -1,0 +1,77 @@
+/*
+ * layout.css — app shell and section flow.
+ * Mobile first. Breakpoints: 768px (tablet) and 1024px (desktop).
+ */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.app__main {
+  flex: 1;
+  display: grid;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: var(--content-width);
+  margin-inline: auto;
+  padding: var(--space-5) var(--space-4) var(--space-7);
+}
+
+.app__footer {
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .app__header {
+    padding-inline: var(--space-6);
+  }
+
+  .app__main {
+    padding-inline: var(--space-6);
+  }
+}
+
+/* Desktop: hourly forecast becomes a right-hand column. */
+@media (min-width: 1024px) {
+  .app__main {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    grid-template-areas:
+      'hero hero'
+      'current hourly'
+      'metrics hourly'
+      'daily hourly';
+    align-content: start;
+  }
+
+  .hero {
+    grid-area: hero;
+  }
+
+  .current {
+    grid-area: current;
+  }
+
+  .metrics {
+    grid-area: metrics;
+  }
+
+  .daily {
+    grid-area: daily;
+  }
+
+  .hourly {
+    grid-area: hourly;
+  }
+}

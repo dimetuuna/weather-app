@@ -1,0 +1,278 @@
+/*
+ * components.css — styles for the individual UI pieces of the scaffold.
+ * Detailed component styling (dropdown behaviour, suggestion list, forecast
+ * cards, loading/error states) lands in the later UI tasks.
+ */
+
+/* ---------- Header ---------- */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+}
+
+.brand__logo {
+  width: auto;
+  height: 2.5rem;
+}
+
+/* ---------- Units dropdown ---------- */
+
+.units {
+  position: relative;
+}
+
+.units__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.units__toggle:hover {
+  background-color: var(--color-surface-strong);
+}
+
+.units__menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 5;
+  min-width: 10rem;
+  padding: var(--space-2);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.units__option {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.units__option:hover {
+  background-color: var(--color-surface-strong);
+}
+
+.units__option[aria-selected='true'] {
+  background-color: var(--color-blue-700);
+}
+
+/* ---------- Hero + search ---------- */
+
+.hero {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: center;
+  text-align: center;
+}
+
+.hero__title {
+  font-size: clamp(2rem, 6vw, var(--font-size-xl));
+  text-wrap: balance;
+}
+
+.search {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 36rem;
+}
+
+.search__field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+
+.search__field:focus-within {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+}
+
+.search__input::placeholder {
+  color: var(--color-neutral-300);
+}
+
+.search__input:focus {
+  outline: none;
+}
+
+.search__suggestions {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: var(--space-2);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .search {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.button {
+  padding: var(--space-3) var(--space-5);
+  background-color: var(--color-blue-500);
+  color: var(--color-neutral-0);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--weight-medium);
+}
+
+.button:hover {
+  background-color: var(--color-blue-700);
+}
+
+/* ---------- Current conditions ---------- */
+
+.current__card {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-hero-gradient);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.current__location {
+  font-size: var(--font-size-lg);
+}
+
+.current__date {
+  color: var(--color-neutral-200);
+  font-size: var(--font-size-sm);
+}
+
+.current__reading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.current__temperature {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.current__description {
+  font-size: var(--font-size-md);
+}
+
+/* ---------- Metrics ---------- */
+
+.metrics__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.metric {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+
+.metric__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--weight-medium);
+}
+
+.metric__value {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .metrics__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Daily + hourly forecasts ---------- */
+
+.daily__title,
+.hourly__title {
+  font-size: var(--font-size-md);
+  font-family: var(--font-body);
+  font-weight: var(--weight-semibold);
+}
+
+.daily__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.hourly {
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
+
+.hourly__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.hourly__select {
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface-strong);
+  color: var(--color-text);
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.hourly__list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ---------- Status + footer ---------- */
+
+.status {
+  color: var(--color-neutral-200);
+  text-align: center;
+}
+
+.attribution {
+  color: var(--color-neutral-300);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
