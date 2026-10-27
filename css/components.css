@@ -96,9 +96,17 @@
   border-radius: var(--radius-md);
 }
 
+/* The input inside carries `outline: none`, so this ring *is* the
+   search field's focus indicator. It uses the same double ring as
+   `:focus-visible` in base.css — a Neutral 0 inner ring plus a Blue
+   500 outer ring — so it clears 3:1 on the page background and on the
+   Neutral 800 field surface (WCAG 2.2 §1.4.11). */
 .search__field:focus-within {
-  outline: 3px solid var(--color-focus-ring);
+  outline: 2px solid transparent;
   outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--color-focus-ring-inner),
+    0 0 0 4px var(--color-focus-ring);
 }
 
 .search__input {
@@ -114,8 +122,12 @@
   color: var(--color-neutral-300);
 }
 
+/* The visible field container carries the focus ring, so the input
+   itself is stripped of any indicator — otherwise the global
+   `:focus-visible` ring would draw a second one around the text. */
 .search__input:focus {
   outline: none;
+  box-shadow: none;
 }
 
 .search__suggestions {

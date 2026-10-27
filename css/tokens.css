@@ -19,10 +19,16 @@
 /* ------------------------------------------------------------------ *
  * 1. Fonts
  *
- * Self-hosted (no third-party requests, no privacy/GDPR concerns, no
- * layout shift from a late webfont). `font-display: swap` means text
- * renders immediately in the fallback face and re-flows once the
- * webfont arrives.
+ * Self-hosted (no third-party requests, no privacy/GDPR concerns).
+ *
+ * `font-display: swap` paints text immediately in the fallback face
+ * and swaps the webfont in once it has loaded. Because the fallback
+ * and DM Sans do not share metrics, that swap can *reflow* text that
+ * is already on screen — the classic FOUT. The shift is brief here
+ * (same-origin files, a few hundred kB) but it is not zero: a
+ * metric-matched fallback (`size-adjust` / `ascent-override` on a
+ * local fallback @font-face) or preloading the files would remove it.
+ * Worth revisiting in the performance pass.
  *
  * DM Sans ships as a *variable* font with a `wght` axis (100–1000) and a
  * separate italic variable file, so a single download covers every weight
@@ -102,9 +108,15 @@
   --color-accent-strong: var(--color-blue-700);
   --color-accent-warm: var(--color-orange-500);
 
-  /* Focus ring — Blue 500 on the dark background clears 3:1 for the
-     non-text contrast requirement of WCAG 2.2 (1.4.11). */
+  /* Focus ring — a double ring (built in base.css): a Neutral 0 inner
+     ring that clears 3:1 against every surface in the palette
+     (10.58:1 or better) plus a Blue 500 outer ring that carries the
+     brand colour and still clears 3:1 against a light surface
+     (5.90:1). A single-colour ring does not: Blue 500 falls to
+     2.49:1 / 2.17:1 / 1.79:1 on the Neutral 800 / 700 / 600 surfaces
+     and fails WCAG 2.2 §1.4.11 there. */
   --color-focus-ring: var(--color-blue-500);
+  --color-focus-ring-inner: var(--color-neutral-0);
 
   /* Hero gradient + shadow tint */
   --color-hero-gradient: linear-gradient(135deg, var(--color-blue-500) 0%, var(--color-blue-700) 100%);

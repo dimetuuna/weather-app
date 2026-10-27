@@ -112,14 +112,34 @@ input[type='search']::-webkit-search-cancel-button {
 
 /* ------------------------------------------------------------------ *
  * Focus — WCAG 2.2 (2.4.7 focus visible, 2.4.11 focus not obscured)
+ * + WCAG 1.4.11 non-text contrast
  *
- * The ring is Blue 500 on the dark background: >3:1 contrast against
- * both the page and the card surfaces.
+ * The indicator is a *double ring* drawn with `box-shadow`:
+ *
+ *   0–2px  Neutral 0 (white) inner ring — abuts the focused element
+ *   2–4px  Blue 500 outer ring — carries the brand colour
+ *
+ * Why two rings: Blue 500 on its own only clears 3:1 against the page
+ * background (3.40:1). Against the Neutral 800 / 700 / 600 card
+ * surfaces it drops to 2.49:1 / 2.17:1 / 1.79:1, so a single-colour
+ * ring fails 1.4.11 on cards, panels and the day selector. The white
+ * inner ring clears 10.58:1 or better against every surface in the
+ * palette, so the indicator is legible wherever it lands, and the
+ * Blue 500 outer ring (5.90:1 against white) covers a light surface
+ * if the theme is ever inverted.
+ *
+ * The `outline` is transparent but deliberately not `none`: in
+ * forced-colors mode browsers drop `box-shadow` and repaint the
+ * outline in a system colour, so keyboard focus stays visible in
+ * Windows High Contrast.
  * ------------------------------------------------------------------ */
 
 :focus-visible {
-  outline: 3px solid var(--color-focus-ring);
+  outline: 2px solid transparent;
   outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--color-focus-ring-inner),
+    0 0 0 4px var(--color-focus-ring);
 }
 
 ::selection {
