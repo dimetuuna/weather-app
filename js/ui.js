@@ -6,6 +6,7 @@
  * keep incomplete data from leaking `NaN` or `undefined` into the interface.
  */
 
+import { persist } from './state.js';
 import { getUnitConfig } from './units.js';
 import { getWeatherInfo } from './weather-codes.js';
 
@@ -412,6 +413,205 @@ export function renderStatus(state = {}, root = globalThis.document) {
   status.dataset.status = statusName;
   status.textContent = message;
   status.hidden = message === '';
+}
+
+/**
+ * Wires the units menu button to the application store.
+ *
+ * The six options represent three dimensions, but they share one unit-system
+ * setting: choosing any metric option selects metric, and any imperial option
+ * selects imperial. Changed selections are persisted and announced both through
+ * `onChange` and a document-level `units:change` event so the app can refetch.
+ */
+export function initUnitsDropdown(
+  root = globalThis.document,
+  { getState, setState, onChange } = {},
+) {
+  const container = root?.matches?.('[data-units]')
+    ? root
+    : query(root, '[data-units]');
+  const toggle = query(container, '[data-units-toggle]');
+  const menu = query(container, '#units-menu');
+
+  if (!container || !toggle || !menu) {
+    return null;
+  }
+  if (typeof getState !== 'function' || typeof setState !== 'function') {
+    throw new TypeError('initUnitsDropdown requires getState and setState functions.');
+  }
+
+  const document = container.ownerDocument;
+  const options = [...menu.querySelectorAll('[data-units-option]')];
+
+  function syncUnits() {
+    const units = getUnitConfig(getState()?.units).key;
+    options.forEach((option) => {
+      option.setAttribute(
+        'aria-checked',
+        String(option.dataset.unitsOption === units),
+      );
+    });
+    return units;
+  }
+
+  function focusOption(option) {
+    if (!option) {
+      return;
+    }
+    options.forEach((item) => {
+      item.tabIndex = item === option ? 0 : -1;
+    });
+    option.focus({ preventScroll: true });
+  }
+
+  function closeUnitsDropdown({ restoreFocus = false } = {}) {
+    menu.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) {
+      toggle.focus({ preventScroll: true });
+    }
+  }
+
+  function openUnitsDropdown(position = 'selected') {
+    const units = syncUnits();
+    menu.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+
+    const selected = options.find((option) => option.dataset.unitsOption === units);
+    const target = position === 'first'
+      ? options[0]
+      : position === 'last'
+        ? options.at(-1)
+        : selected ?? options[0];
+    focusOption(target);
+  }
+
+  function toggleUnitsDropdown() {
+    if (menu.hidden) {
+      openUnitsDropdown();
+    } else {
+      closeUnitsDropdown({ restoreFocus: true });
+    }
+  }
+
+  function selectOption(option) {
+    const units = option?.dataset.unitsOption;
+    if (units !== 'metric' && units !== 'imperial') {
+      return;
+    }
+
+    const previousState = getState();
+    if (getUnitConfig(previousState?.units).key !== units) {
+      const nextState = setState({ units }) ?? getState();
+      syncUnits();
+      persist(nextState);
+      if (typeof onChange === 'function') {
+        onChange(nextState, previousState);
+      }
+
+      const CustomEventConstructor = document.defaultView?.CustomEvent
+        ?? globalThis.CustomEvent;
+      document.dispatchEvent(new CustomEventConstructor('units:change', {
+        detail: { units },
+      }));
+    }
+
+    closeUnitsDropdown({ restoreFocus: true });
+  }
+
+  function handleToggleKeydown(event) {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      openUnitsDropdown(event.key === 'ArrowDown' ? 'first' : 'last');
+    }
+  }
+
+  function handleMenuClick(event) {
+    const option = event.target.closest?.('[data-units-option]');
+    if (option && menu.contains(option)) {
+      selectOption(option);
+    }
+  }
+
+  function handleMenuKeydown(event) {
+    const option = event.target.closest?.('[data-units-option]');
+    if (!option || !menu.contains(option)) {
+      return;
+    }
+
+    const index = options.indexOf(option);
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        focusOption(options[(index + 1) % options.length]);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        focusOption(options[(index - 1 + options.length) % options.length]);
+        break;
+      case 'Home':
+        event.preventDefault();
+        focusOption(options[0]);
+        break;
+      case 'End':
+        event.preventDefault();
+        focusOption(options.at(-1));
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        selectOption(option);
+        break;
+      case 'Tab':
+        closeUnitsDropdown();
+        toggle.focus({ preventScroll: true });
+        break;
+      default:
+        break;
+    }
+  }
+
+  function handleDocumentClick(event) {
+    if (!menu.hidden && !container.contains(event.target)) {
+      closeUnitsDropdown();
+    }
+  }
+
+  function handleDocumentKeydown(event) {
+    if (event.key === 'Escape' && !menu.hidden) {
+      event.preventDefault();
+      closeUnitsDropdown({ restoreFocus: true });
+    }
+  }
+
+  toggle.addEventListener('click', toggleUnitsDropdown);
+  toggle.addEventListener('keydown', handleToggleKeydown);
+  menu.addEventListener('click', handleMenuClick);
+  menu.addEventListener('keydown', handleMenuKeydown);
+  document.addEventListener('click', handleDocumentClick);
+  document.addEventListener('keydown', handleDocumentKeydown);
+
+  const units = syncUnits();
+  const selected = options.find((option) => option.dataset.unitsOption === units) ?? options[0];
+  options.forEach((option) => {
+    option.tabIndex = option === selected ? 0 : -1;
+  });
+  closeUnitsDropdown();
+
+  return {
+    open: openUnitsDropdown,
+    close: closeUnitsDropdown,
+    toggleUnitsDropdown,
+    sync: syncUnits,
+    destroy() {
+      toggle.removeEventListener('click', toggleUnitsDropdown);
+      toggle.removeEventListener('keydown', handleToggleKeydown);
+      menu.removeEventListener('click', handleMenuClick);
+      menu.removeEventListener('keydown', handleMenuKeydown);
+      document.removeEventListener('click', handleDocumentClick);
+      document.removeEventListener('keydown', handleDocumentKeydown);
+    },
+  };
 }
 
 /** Render every forecast region represented by the application state. */

@@ -24,14 +24,13 @@
           <img class="brand__logo" src="/assets/images/logo.svg" alt="Weather Now" width="197" height="40" />
         </a>
 
-        <!-- Units dropdown: the custom menu behaviour is implemented in a later task. -->
         <div class="units" data-units>
           <button
             class="units__toggle"
             type="button"
             id="units-toggle"
             data-units-toggle
-            aria-haspopup="listbox"
+            aria-haspopup="menu"
             aria-expanded="false"
             aria-controls="units-menu"
           >
@@ -40,10 +39,23 @@
             <img class="units__chevron" src="/assets/images/icon-dropdown.svg" alt="" width="14" height="14" aria-hidden="true" />
           </button>
 
-          <ul class="units__menu" id="units-menu" role="listbox" aria-label="Measurement units" hidden>
-            <li class="units__option" role="option" aria-selected="true" data-units-option="metric">Metric</li>
-            <li class="units__option" role="option" aria-selected="false" data-units-option="imperial">Imperial</li>
-          </ul>
+          <div class="units__menu" id="units-menu" role="menu" aria-label="Measurement units" hidden>
+            <div class="units__group" role="group" aria-labelledby="units-temperature-label">
+              <span class="units__group-label" id="units-temperature-label">Temperature</span>
+              <button class="units__option" type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-units-option="metric">Celsius (°C)</button>
+              <button class="units__option" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-units-option="imperial">Fahrenheit (°F)</button>
+            </div>
+            <div class="units__group" role="group" aria-labelledby="units-wind-label">
+              <span class="units__group-label" id="units-wind-label">Wind Speed</span>
+              <button class="units__option" type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-units-option="metric">km/h</button>
+              <button class="units__option" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-units-option="imperial">mph</button>
+            </div>
+            <div class="units__group" role="group" aria-labelledby="units-precipitation-label">
+              <span class="units__group-label" id="units-precipitation-label">Precipitation</span>
+              <button class="units__option" type="button" role="menuitemradio" aria-checked="true" tabindex="-1" data-units-option="metric">Millimeters (mm)</button>
+              <button class="units__option" type="button" role="menuitemradio" aria-checked="false" tabindex="-1" data-units-option="imperial">Inches (in)</button>
+            </div>
+          </div>
         </div>
       </header>
 
