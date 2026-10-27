@@ -32,6 +32,13 @@
   text-align: center;
 }
 
+.current,
+.metrics,
+.daily,
+.hourly {
+  min-width: 0;
+}
+
 /* Tablet */
 @media (min-width: 768px) {
   .app__header {
@@ -48,11 +55,16 @@
   .app__main {
     grid-template-columns: minmax(0, 1fr) 22rem;
     grid-template-areas:
+      'status status'
       'hero hero'
       'current hourly'
       'metrics hourly'
       'daily hourly';
     align-content: start;
+  }
+
+  .status {
+    grid-area: status;
   }
 
   .hero {

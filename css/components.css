@@ -135,12 +135,24 @@
   top: calc(100% + var(--space-2));
   left: 0;
   right: 0;
-  z-index: 5;
+  z-index: var(--z-dropdown);
   padding: var(--space-2);
   background-color: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   text-align: left;
+}
+
+.search__suggestion {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.search__suggestion:hover,
+.search__suggestion[aria-selected='true'] {
+  background-color: var(--color-surface-strong);
 }
 
 @media (min-width: 768px) {
@@ -168,10 +180,20 @@
 .current__card {
   display: grid;
   gap: var(--space-5);
+  min-height: 18rem;
   padding: var(--space-5);
-  background: var(--color-hero-gradient);
+  background:
+    url('/assets/images/bg-today-small.svg') center / cover no-repeat,
+    var(--color-hero-gradient);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.current__meta {
+  display: grid;
+  gap: var(--space-2);
+  align-content: center;
 }
 
 .current__location {
@@ -186,12 +208,19 @@
 .current__reading {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-4);
+}
+
+.current__icon {
+  width: 5rem;
+  height: 5rem;
+  object-fit: contain;
 }
 
 .current__temperature {
   font-family: var(--font-display);
-  font-size: 3.5rem;
+  font-size: clamp(4rem, 16vw, 6rem);
   line-height: 1;
 }
 
@@ -248,7 +277,42 @@
   margin-top: var(--space-4);
 }
 
+.daily__item {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-4) var(--space-3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.daily__day,
+.daily__high,
+.daily__low {
+  font-size: var(--font-size-sm);
+}
+
+.daily__icon {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+}
+
+.daily__temperatures {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.daily__low {
+  color: var(--color-text-muted);
+}
+
 .hourly {
+  min-width: 0;
   padding: var(--space-4);
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
@@ -263,6 +327,7 @@
 }
 
 .hourly__select {
+  max-width: 9rem;
   padding: var(--space-2) var(--space-3);
   background-color: var(--color-surface-strong);
   color: var(--color-text);
@@ -274,17 +339,82 @@
 .hourly__list {
   display: grid;
   gap: var(--space-2);
+  max-height: 40rem;
+  padding-right: var(--space-1);
+  overflow-y: auto;
+  scrollbar-color: var(--color-surface-strongest) transparent;
+}
+
+.hourly__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--color-surface-strong);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.hourly__icon {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+}
+
+.hourly__time {
+  flex: 1;
+  font-size: var(--font-size-md);
+}
+
+.hourly__temperature {
+  margin-left: auto;
+  font-size: var(--font-size-md);
 }
 
 /* ---------- Status + footer ---------- */
 
 .status {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
   color: var(--color-neutral-200);
   text-align: center;
+}
+
+.status[data-status='error'] {
+  border-color: var(--color-accent-warm);
+  color: var(--color-text);
 }
 
 .attribution {
   color: var(--color-neutral-300);
   font-size: var(--font-size-sm);
   text-align: center;
+}
+
+@media (min-width: 768px) {
+  .current__card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: var(--space-6);
+    background-image: url('/assets/images/bg-today-large.svg');
+    text-align: left;
+  }
+
+  .current__meta {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .current__reading {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .current__description {
+    grid-column: 1;
+    grid-row: 2;
+  }
 }
