@@ -6,7 +6,7 @@
  */
 
 import { createStore, loadPersisted, persist } from './state.js';
-import { fetchForecast, fetchByCoords, searchLocations } from './api.js';
+import { fetchForecast, fetchByCoords, searchLocations, fetchIpLocation } from './api.js';
 import { getUnitConfig } from './units.js';
 import { renderApp, renderStatus } from './ui.js';
 import { initSearch } from './search.js';
@@ -164,7 +164,24 @@ async function boot() {
       fetchWeather(coords, store.getState().units);
       return;
     } catch {
-      // fall through to persisted/initial
+      // Geolocation denied or unavailable: try an IP-based best effort before
+      // falling back to a persisted place or an empty initial state.
+      try {
+        const ipLocation = await fetchIpLocation();
+        if (ipLocation && Number.isFinite(ipLocation.lat) && Number.isFinite(ipLocation.lon)) {
+          const loc = ipLocation.name
+            ? ipLocation
+            : { ...ipLocation, name: 'Your area' };
+          if (!store.getState().location) {
+            store.setState({ location: loc });
+          }
+          lastFetch = { kind: 'location', payload: loc };
+          fetchWeather(loc, store.getState().units);
+          return;
+        }
+      } catch {
+        // ignore; fall through to persisted/initial
+      }
     }
   }
 

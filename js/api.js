@@ -298,3 +298,49 @@ export async function fetchForecast(lat, lon, units, { signal } = {}) {
  * @type {typeof fetchForecast}
  */
 export const fetchByCoords = fetchForecast;
+
+/**
+ * Best-effort location derived from the visitor's IP address.
+ *
+ * Used as a fallback when the browser's Geolocation API is unavailable or
+ * denied, so the app can still show local weather without forcing a search.
+ * Returns `null` when the lookup fails or the service's answer is unusable,
+ * so callers can fall back to a persisted place or an empty initial state.
+ *
+ * @param {{ signal?: AbortSignal }} [options]
+ * @returns {Promise<{name: string, country: string, lat: number, lon: number} | null>}
+ */
+export async function fetchIpLocation({ signal } = {}) {
+  let response;
+  try {
+    response = await fetch('https://ipapi.co/json/', { signal });
+  } catch {
+    return null;
+  }
+  if (!response || !response.ok) {
+    return null;
+  }
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    return null;
+  }
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+  const lat = Number(data.latitude);
+  const lon = Number(data.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return null;
+  }
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    return null;
+  }
+  return {
+    name: typeof data.city === 'string' && data.city.trim() !== '' ? data.city.trim() : '',
+    country: typeof data.country_name === 'string' ? data.country_name.trim() : '',
+    lat,
+    lon,
+  };
+}
