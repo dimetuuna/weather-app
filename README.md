@@ -32,8 +32,8 @@ Users should be able to:
 
 ### Links
 
-- Solution URL: [GitHub repository](https://github.com/dimetuuna/weather-app)
-- Live Site URL: [Vercel deployment](https://weather-app.vercel.app)
+- Solution URL: [GitHub repository](https://github.com/dimetuuna/weather-app) _(create the repo and push; see below)_
+- Live Site URL: [Vercel deployment](https://weather-app-main-sable.vercel.app)
 
 ## My process
 
