@@ -106,10 +106,14 @@ export function isValidLocation(value) {
   }
 
   const { name, country, lat, lon } = value;
-  if (typeof name !== 'string' || typeof country !== 'string') {
+  // `country` is optional: Open-Meteo returns results with no country for
+  // some territories (Bermuda, Gibraltar, ...), so requiring a non-blank
+  // country would silently drop ~6% of search results. The name is what
+  // we display; a blank country is stored as '' (matches api.js).
+  if (typeof name !== 'string' || name.trim() === '') {
     return false;
   }
-  if (name.trim() === '' || country.trim() === '') {
+  if (country !== undefined && country !== null && typeof country !== 'string') {
     return false;
   }
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
@@ -211,7 +215,7 @@ function normalizeLocation(value) {
 
   return {
     name: value.name,
-    country: value.country,
+    country: typeof value.country === 'string' ? value.country : '',
     lat: value.lat,
     lon: value.lon,
   };

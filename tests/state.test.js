@@ -109,7 +109,8 @@ describe('js/state.js', () => {
 
     it('rejects a location without a name, a country or usable coordinates', () => {
       expect(isValidLocation({ ...BERLIN, name: 42 })).toBe(false);
-      expect(isValidLocation({ ...BERLIN, country: null })).toBe(false);
+      // country is optional; null/undefined/blank are allowed.
+      expect(isValidLocation({ ...BERLIN, country: null })).toBe(true);
       expect(isValidLocation({ ...BERLIN, lat: 'north' })).toBe(false);
       expect(isValidLocation({ ...BERLIN, lon: Number.NaN })).toBe(false);
       expect(isValidLocation(null)).toBe(false);
@@ -121,11 +122,12 @@ describe('js/state.js', () => {
       expect(isValidLocation({ ...BERLIN, lon: 181 })).toBe(false);
     });
 
-    it('rejects a location with a blank name or country', () => {
+    it('rejects a location with a blank name (country is optional)', () => {
       expect(isValidLocation({ ...BERLIN, name: '' })).toBe(false);
       expect(isValidLocation({ ...BERLIN, name: '   ' })).toBe(false);
-      expect(isValidLocation({ ...BERLIN, country: '' })).toBe(false);
-      expect(isValidLocation({ ...BERLIN, country: '  ' })).toBe(false);
+      // A blank country is allowed: Open-Meteo omits it for some territories.
+      expect(isValidLocation({ ...BERLIN, country: '' })).toBe(true);
+      expect(isValidLocation({ ...BERLIN, country: '  ' })).toBe(true);
     });
 
     it('accepts a forecast with the three blocks and rejects anything else', () => {
@@ -243,14 +245,15 @@ describe('js/state.js', () => {
       expect(store.getState().location).toBeNull();
     });
 
-    it('drops a location with a blank name or country', () => {
+    it('drops a location with a blank name but keeps a blank country', () => {
       const store = createStore({ location: BERLIN });
 
       store.setState({ location: { ...BERLIN, name: '   ' } });
       expect(store.getState().location).toBeNull();
 
       store.setState({ location: { ...BERLIN, country: '' } });
-      expect(store.getState().location).toBeNull();
+      expect(store.getState().location).not.toBeNull();
+      expect(store.getState().location.country).toBe('');
     });
 
     it('clears the location when it is set to null', () => {
@@ -559,14 +562,14 @@ describe('js/state.js', () => {
       expect(JSON.parse(storage.getItem(STORAGE_KEYS.lastLocation))).toEqual(BERLIN);
     });
 
-    it('does not write a location with a blank name or country', () => {
+    it('does not write a location with a blank name, but writes one with a blank country', () => {
       const storage = createStorage();
 
       persist({ ...DEFAULT_STATE, location: { ...BERLIN, name: '' } }, storage);
       expect(storage.getItem(STORAGE_KEYS.lastLocation)).toBeNull();
 
       persist({ ...DEFAULT_STATE, location: { ...BERLIN, country: '   ' } }, storage);
-      expect(storage.getItem(STORAGE_KEYS.lastLocation)).toBeNull();
+      expect(storage.getItem(STORAGE_KEYS.lastLocation)).not.toBeNull();
     });
 
     it('writes nothing when there is no storage', () => {
@@ -630,7 +633,7 @@ describe('js/state.js', () => {
       expect(loadPersisted(storage).location).toBeNull();
     });
 
-    it('drops a last location with a blank name or country', () => {
+    it('drops a last location with a blank name (country is optional)', () => {
       const blankName = createStorage({
         [STORAGE_KEYS.lastLocation]: JSON.stringify({ ...BERLIN, name: '   ' }),
       });
@@ -639,7 +642,9 @@ describe('js/state.js', () => {
       });
 
       expect(loadPersisted(blankName).location).toBeNull();
-      expect(loadPersisted(blankCountry).location).toBeNull();
+      // A blank country is allowed and stored as '' (Open-Meteo omits it).
+      expect(loadPersisted(blankCountry).location).not.toBeNull();
+      expect(loadPersisted(blankCountry).location.country).toBe('');
     });
 
     it('answers with the defaults when there is no storage', () => {
