@@ -179,6 +179,15 @@ async function boot() {
 
 // Listen for retry event from renderStatus
 document.addEventListener('weather:retry', retryFetch);
+document.addEventListener('search:empty', () => {
+  store.setState({ status: 'empty', error: null });
+});
+document.addEventListener('search:error', (event) => {
+  store.setState({
+    status: 'error',
+    error: event?.detail?.message || 'Search failed',
+  });
+});
 const retryBtn = document.querySelector('[data-retry]');
 if (retryBtn) {
   retryBtn.addEventListener('click', retryFetch);
