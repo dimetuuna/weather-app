@@ -1,8 +1,12 @@
 /*
  * reset.css — element defaults.
- * Deliberately small: only the resets the scaffold needs so later style work
- * starts from a predictable baseline.
+ *
+ * Deliberately small and opinion-free: only the resets that give later
+ * style work a predictable baseline. Anything that encodes a *design*
+ * decision belongs in tokens.css / base.css instead.
  */
+
+/* ---------- Box model ---------- */
 
 *,
 *::before,
@@ -14,21 +18,42 @@
   margin: 0;
 }
 
+/* ---------- Document ---------- */
+
 html {
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height on mobile browsers */
 }
+
+/* The `hidden` attribute must win over any component `display` rule
+   (e.g. `.search__suggestions { display: grid }`), otherwise "hidden"
+   elements are still painted and still reachable by screen readers. */
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Media ---------- */
 
 img,
 picture,
 svg,
-video {
+video,
+canvas {
   display: block;
   max-width: 100%;
 }
+
+img,
+video {
+  height: auto;
+}
+
+/* ---------- Forms ---------- */
 
 input,
 button,
@@ -38,17 +63,44 @@ textarea {
   color: inherit;
 }
 
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+textarea {
+  resize: vertical;
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+/* ---------- Tables ---------- */
+
+table {
+  border-collapse: collapse;
+}
+
+/* ---------- Lists ---------- */
+
 ul,
 ol {
   list-style: none;
   padding: 0;
 }
 
-button {
-  cursor: pointer;
-  background: none;
-  border: 0;
-}
+/* ---------- Links ---------- */
 
 a {
   color: inherit;

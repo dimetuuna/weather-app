@@ -1,9 +1,33 @@
 /*
- * tokens.css — design tokens (colors, typography, spacing, radii, shadows)
- * plus the self-hosted @font-face declarations for DM Sans and Bricolage Grotesque.
+ * tokens.css — the single source of truth for design decisions.
+ *
+ * Contents
+ *   1. @font-face   — self-hosted DM Sans (variable) + Bricolage Grotesque (bold)
+ *   2. Colors      — raw palette from style-guide.md + semantic aliases
+ *   3. Typography  — families, sizes, line heights, weights, tracking
+ *   4. Spacing     — 4px / 8px scale
+ *   5. Radii       — corner radii
+ *   6. Shadows     — elevation
+ *   7. Motion      — durations + easings (reduced motion honoured in base.css)
+ *   8. Layers      — z-index scale
+ *   9. Layout      — content width + breakpoint values
+ *
+ * Every value below is a custom property, so a component never hard-codes a
+ * colour, size or duration. Change it here and the whole app follows.
  */
 
-/* ---------- Fonts ---------- */
+/* ------------------------------------------------------------------ *
+ * 1. Fonts
+ *
+ * Self-hosted (no third-party requests, no privacy/GDPR concerns, no
+ * layout shift from a late webfont). `font-display: swap` means text
+ * renders immediately in the fallback face and re-flows once the
+ * webfont arrives.
+ *
+ * DM Sans ships as a *variable* font with a `wght` axis (100–1000) and a
+ * separate italic variable file, so a single download covers every weight
+ * the style guide asks for: 300, 500, 600, 700 and 600 italic.
+ * ------------------------------------------------------------------ */
 
 @font-face {
   font-family: 'DM Sans';
@@ -29,7 +53,15 @@
   font-display: swap;
 }
 
-/* ---------- Colors ---------- */
+/* ------------------------------------------------------------------ *
+ * 2. Colors — raw palette (style-guide.md) + semantic aliases
+ *
+ * Two layers on purpose:
+ *   --color-neutral-900 …  raw values, the design-system palette
+ *   --color-bg / --color-text …  what a component actually asks for
+ * Components consume the semantic layer only, so re-theming later means
+ * editing one block instead of hunting through every stylesheet.
+ * ------------------------------------------------------------------ */
 
 :root {
   /* Neutral */
@@ -41,62 +73,164 @@
   --color-neutral-200: hsl(250 6% 84%);
   --color-neutral-0: hsl(0 0% 100%);
 
-  /* Accents */
+  /* Orange */
   --color-orange-500: hsl(28 100% 52%);
+
+  /* Blue */
   --color-blue-500: hsl(233 67% 56%);
   --color-blue-700: hsl(248 70% 36%);
 
-  /* Semantic aliases */
+  /* ---- Semantic aliases ---- */
+
+  /* Surfaces, darkest to lightest */
   --color-bg: var(--color-neutral-900);
   --color-surface: var(--color-neutral-800);
   --color-surface-strong: var(--color-neutral-700);
+  --color-surface-strongest: var(--color-neutral-600);
+
+  /* Text */
   --color-text: var(--color-neutral-0);
   --color-text-muted: var(--color-neutral-200);
+  --color-text-subtle: var(--color-neutral-300);
+
+  /* Lines */
+  --color-border: var(--color-neutral-600);
+  --color-border-subtle: var(--color-neutral-700);
+
+  /* Accents */
   --color-accent: var(--color-blue-500);
   --color-accent-strong: var(--color-blue-700);
-  --color-hero-gradient: linear-gradient(135deg, var(--color-blue-500) 0%, var(--color-blue-700) 100%);
+  --color-accent-warm: var(--color-orange-500);
+
+  /* Focus ring — Blue 500 on the dark background clears 3:1 for the
+     non-text contrast requirement of WCAG 2.2 (1.4.11). */
   --color-focus-ring: var(--color-blue-500);
+
+  /* Hero gradient + shadow tint */
+  --color-hero-gradient: linear-gradient(135deg, var(--color-blue-500) 0%, var(--color-blue-700) 100%);
+  --color-shadow: var(--color-neutral-900);
 }
 
-/* ---------- Typography ---------- */
+/* ------------------------------------------------------------------ *
+ * 3. Typography
+ *
+ * Body copy is 18px (style-guide.md). `rem` is used throughout so the
+ * layout still honours the visitor's browser font-size preference.
+ * ------------------------------------------------------------------ */
 
 :root {
-  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-display: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
 
-  --font-size-base: 1.125rem; /* 18px body copy, per the style guide */
+  /* 18px base body copy; the other sizes are relative steps on that. */
+  --font-size-base: 1.125rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.5rem;
   --font-size-xl: 2.5rem;
 
   --line-height-tight: 1.1;
+  --line-height-snug: 1.25;
   --line-height-base: 1.5;
+  --line-height-relaxed: 1.65;
 
+  /* DM Sans covers 100–1000; the style guide uses 300, 500, 600, 700. */
+  --weight-light: 300;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
 }
 
-/* ---------- Spacing, radii, shadows ---------- */
+/* ------------------------------------------------------------------ *
+ * 4. Spacing — 4px / 8px scale
+ *
+ * Every step is a multiple of 4px (4, 8, 12, 16, 24, 32, 48, 64) so
+ * spacing lines up on a 4px grid at the default 16px root font size.
+ * ------------------------------------------------------------------ */
 
 :root {
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4rem;
+  --space-0: 0;
+  --space-1: 0.25rem; /*  4px */
+  --space-2: 0.5rem; /*  8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.5rem; /* 24px */
+  --space-6: 2rem; /* 32px */
+  --space-7: 3rem; /* 48px */
+  --space-8: 4rem; /* 64px */
+}
 
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1.5rem;
+/* ------------------------------------------------------------------ *
+ * 5. Radii
+ * ------------------------------------------------------------------ */
+
+:root {
+  --radius-xs: 0.25rem; /*  4px */
+  --radius-sm: 0.5rem; /*  8px */
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 1.5rem; /* 24px */
   --radius-pill: 999px;
+}
 
-  --shadow-card: 0 0.25rem 0.75rem hsl(243 96% 9% / 40%);
+/* ------------------------------------------------------------------ *
+ * 6. Shadows — elevation
+ * ------------------------------------------------------------------ */
 
-  --content-width: 75rem;
+:root {
+  --shadow-sm: 0 1px 2px hsl(243 96% 9% / 24%);
+  --shadow-md: 0 4px 12px hsl(243 96% 9% / 32%);
+  --shadow-lg: 0 12px 32px hsl(243 96% 9% / 40%);
+
+  /* Alias used by cards and popovers (dropdown, suggestions). */
+  --shadow-card: var(--shadow-lg);
+}
+
+/* ------------------------------------------------------------------ *
+ * 7. Motion
+ *
+ * base.css neutralises every duration/transition under
+ * `prefers-reduced-motion: reduce`.
+ * ------------------------------------------------------------------ */
+
+:root {
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ------------------------------------------------------------------ *
+ * 8. Layers — z-index scale
+ * ------------------------------------------------------------------ */
+
+:root {
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-skip-link: 100;
+}
+
+/* ------------------------------------------------------------------ *
+ * 9. Layout
+ *
+ * NOTE: custom properties cannot be used inside a media-query condition,
+ * so `--bp-*` are the documented source of truth for the breakpoints
+ * while `@media` queries in the other stylesheets repeat the literal
+ * values. Change both together.
+ * ------------------------------------------------------------------ */
+
+:root {
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
+
+  --content-width: 75rem; /* 1200px */
 }
