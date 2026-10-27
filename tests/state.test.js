@@ -121,6 +121,13 @@ describe('js/state.js', () => {
       expect(isValidLocation({ ...BERLIN, lon: 181 })).toBe(false);
     });
 
+    it('rejects a location with a blank name or country', () => {
+      expect(isValidLocation({ ...BERLIN, name: '' })).toBe(false);
+      expect(isValidLocation({ ...BERLIN, name: '   ' })).toBe(false);
+      expect(isValidLocation({ ...BERLIN, country: '' })).toBe(false);
+      expect(isValidLocation({ ...BERLIN, country: '  ' })).toBe(false);
+    });
+
     it('accepts a forecast with the three blocks and rejects anything else', () => {
       expect(isForecastData(FORECAST)).toBe(true);
       expect(isForecastData({ current: {}, daily: {} })).toBe(false);
@@ -233,6 +240,16 @@ describe('js/state.js', () => {
 
       store.setState({ location: { name: 'Nowhere', country: 'Nowhere', lat: 'x', lon: 'y' } });
 
+      expect(store.getState().location).toBeNull();
+    });
+
+    it('drops a location with a blank name or country', () => {
+      const store = createStore({ location: BERLIN });
+
+      store.setState({ location: { ...BERLIN, name: '   ' } });
+      expect(store.getState().location).toBeNull();
+
+      store.setState({ location: { ...BERLIN, country: '' } });
       expect(store.getState().location).toBeNull();
     });
 
@@ -381,6 +398,139 @@ describe('js/state.js', () => {
     });
   });
 
+  describe('protected snapshots', () => {
+    it('hands out a copy of the nested state, so it cannot be changed from the outside', () => {
+      const store = createStore({ location: BERLIN, data: FORECAST });
+
+      const state = store.getState();
+      state.location.name = 'Atlantis';
+      state.data.current.temperature = 99;
+
+      const fresh = store.getState();
+      expect(fresh.location).toEqual(BERLIN);
+      expect(fresh.data).toEqual(FORECAST);
+    });
+
+    it('copies the forecast it is given, so the caller cannot change it afterwards', () => {
+      const store = createStore();
+      const forecast = {
+        current: { time: '2026-10-27T12:00', temperature: 14 },
+        daily: { time: ['2026-10-27'] },
+        hourly: { time: ['2026-10-27T12:00'] },
+      };
+
+      store.setState({ data: forecast });
+      forecast.current.temperature = 99;
+
+      expect(store.getState().data.current.temperature).toBe(14);
+    });
+
+    it('gives the subscriber a snapshot, so it cannot corrupt the state', () => {
+      const store = createStore({ location: BERLIN, data: FORECAST });
+      const listener = vi.fn((next) => {
+        next.location.name = 'Atlantis';
+        next.data.current.temperature = 99;
+      });
+
+      store.subscribe(listener);
+      store.setState({ status: 'success' });
+
+      const state = store.getState();
+      expect(state.location).toEqual(BERLIN);
+      expect(state.data.current.temperature).toBe(14);
+      expect(state.status).toBe('success');
+    });
+
+    it('gives the subscriber a copy of the previous state as well', () => {
+      const store = createStore({ location: BERLIN });
+      const listener = vi.fn((next, previous) => {
+        previous.location.name = 'Atlantis';
+      });
+
+      store.subscribe(listener);
+      store.setState({ status: 'success' });
+
+      expect(store.getState().location).toEqual(BERLIN);
+    });
+
+    it('gives every subscriber of a cycle its own copy', () => {
+      const store = createStore({ location: BERLIN });
+      const seen = [];
+
+      store.subscribe((next) => {
+        next.location.name = 'Atlantis';
+      });
+      store.subscribe((next) => {
+        seen.push(next.location.name);
+      });
+
+      store.setState({ status: 'success' });
+
+      expect(seen).toEqual(['Berlin']);
+    });
+  });
+
+  describe('reentrant updates', () => {
+    it('gives every subscriber of a cycle the same pair of states', () => {
+      const store = createStore();
+      const calls = [];
+
+      store.subscribe((next, previous) => {
+        calls.push(['first', next.status, previous.status]);
+        if (next.status === 'loading') {
+          store.setState({ status: 'error' });
+        }
+      });
+      store.subscribe((next, previous) => {
+        calls.push(['second', next.status, previous.status]);
+      });
+
+      store.setState({ status: 'loading' });
+
+      expect(calls).toEqual([
+        ['first', 'loading', 'idle'],
+        ['second', 'loading', 'idle'],
+        ['first', 'error', 'loading'],
+        ['second', 'error', 'loading'],
+      ]);
+    });
+
+    it('applies an update a subscriber made after the cycle is over', () => {
+      const store = createStore();
+      const seen = [];
+
+      store.subscribe((next) => {
+        seen.push(next.status);
+        if (next.status === 'loading') {
+          const returned = store.setState({ status: 'error' });
+          seen.push(`returned:${returned.status}`);
+        }
+      });
+
+      store.setState({ status: 'loading' });
+
+      expect(seen).toEqual(['loading', 'returned:loading', 'error']);
+      expect(store.getState().status).toBe('error');
+    });
+
+    it('stops a subscriber that updates the state on every notification', () => {
+      const store = createStore();
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const listener = vi.fn(() => {
+        store.setState({ status: 'success' });
+      });
+
+      store.subscribe(listener);
+      store.setState({ status: 'loading' });
+
+      expect(error).toHaveBeenCalled();
+      expect(listener.mock.calls.length).toBeLessThanOrEqual(51);
+      expect(store.getState().status).toBe('success');
+
+      error.mockRestore();
+    });
+  });
+
   describe('persist(state)', () => {
     it('writes the unit system and the last location', () => {
       const storage = createStorage();
@@ -407,6 +557,16 @@ describe('js/state.js', () => {
       persist({ ...DEFAULT_STATE, location: { name: '', country: '', lat: 52.5, lon: 13.4 } }, storage);
 
       expect(JSON.parse(storage.getItem(STORAGE_KEYS.lastLocation))).toEqual(BERLIN);
+    });
+
+    it('does not write a location with a blank name or country', () => {
+      const storage = createStorage();
+
+      persist({ ...DEFAULT_STATE, location: { ...BERLIN, name: '' } }, storage);
+      expect(storage.getItem(STORAGE_KEYS.lastLocation)).toBeNull();
+
+      persist({ ...DEFAULT_STATE, location: { ...BERLIN, country: '   ' } }, storage);
+      expect(storage.getItem(STORAGE_KEYS.lastLocation)).toBeNull();
     });
 
     it('writes nothing when there is no storage', () => {
@@ -468,6 +628,18 @@ describe('js/state.js', () => {
       });
 
       expect(loadPersisted(storage).location).toBeNull();
+    });
+
+    it('drops a last location with a blank name or country', () => {
+      const blankName = createStorage({
+        [STORAGE_KEYS.lastLocation]: JSON.stringify({ ...BERLIN, name: '   ' }),
+      });
+      const blankCountry = createStorage({
+        [STORAGE_KEYS.lastLocation]: JSON.stringify({ ...BERLIN, country: '' }),
+      });
+
+      expect(loadPersisted(blankName).location).toBeNull();
+      expect(loadPersisted(blankCountry).location).toBeNull();
     });
 
     it('answers with the defaults when there is no storage', () => {

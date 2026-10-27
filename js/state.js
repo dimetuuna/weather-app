@@ -11,7 +11,9 @@
  *
  * Every value that comes from the outside — a stored preference, a partial
  * update — is validated before it is kept, so a corrupted `localStorage`
- * entry or a malformed update can never break the render.
+ * entry or a malformed update can never break the render. Every value that
+ * goes out to a consumer is a protected snapshot, so a consumer can never
+ * change the state the store keeps.
  */
 
 import { UNITS } from './units.js';
@@ -89,8 +91,11 @@ export function isValidDayIndex(value) {
  * Tells whether a value is a usable location.
  *
  * A location needs a name and a country to be rendered, and finite
- * coordinates inside the valid ranges to be fetched. Extra properties (the
- * geocoding layer also reports `admin1`) are accepted and dropped later.
+ * coordinates inside the valid ranges to be fetched. A name or a country
+ * that is blank carries no information, so it is rejected as well — a
+ * place called " " is worse than no place at all, because the interface
+ * would render an empty city name. Extra properties (the geocoding layer
+ * also reports `admin1`) are accepted and dropped later.
  *
  * @param {unknown} value Value to check.
  * @returns {boolean} True for a well-formed location.
@@ -102,6 +107,9 @@ export function isValidLocation(value) {
 
   const { name, country, lat, lon } = value;
   if (typeof name !== 'string' || typeof country !== 'string') {
+    return false;
+  }
+  if (name.trim() === '' || country.trim() === '') {
     return false;
   }
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
@@ -131,6 +139,65 @@ export function isForecastData(value) {
 }
 
 /**
+ * Copies a value deeply, so the copy shares nothing with the original.
+ *
+ * `structuredClone` does the work when the runtime has it (every current
+ * browser, and Node 17+); the manual walk is the fallback for the older
+ * ones. Both only have to handle plain objects and arrays, which is all
+ * the state ever holds.
+ *
+ * @param {unknown} value Value to copy.
+ * @returns {unknown} A copy that shares nothing with `value`.
+ */
+function deepClone(value) {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(value);
+    } catch {
+      // A value `structuredClone` refuses (a function, a DOM node) is
+      // copied by hand below.
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => deepClone(item));
+  }
+
+  const copy = {};
+  for (const [key, item] of Object.entries(value)) {
+    copy[key] = deepClone(item);
+  }
+
+  return copy;
+}
+
+/**
+ * Builds the protected copy of the state that leaves the store.
+ *
+ * The flat fields are primitives and need no more than a copy; the nested
+ * ones (`location`, `data`) are cloned. A consumer — a renderer, a
+ * subscriber — that changes what it received therefore changes its own
+ * copy and nothing else: the state the store keeps stays untouched.
+ *
+ * @param {object} state State to copy.
+ * @returns {object} A snapshot that shares nothing with `state`.
+ */
+function snapshotState(state) {
+  return {
+    location: deepClone(state.location),
+    units: state.units,
+    selectedDayIndex: state.selectedDayIndex,
+    status: state.status,
+    data: deepClone(state.data),
+    error: state.error,
+  };
+}
+
+/**
  * Brings a location into the shape the state stores.
  *
  * @param {unknown} value Location to normalize.
@@ -155,6 +222,8 @@ function normalizeLocation(value) {
  *
  * Missing and malformed fields fall back to their default rather than
  * throwing, so a bad update can never leave the app in a broken state.
+ * The forecast is copied, so the store owns its data and the caller cannot
+ * change it behind the store's back.
  *
  * @param {unknown} value Value to normalize.
  * @returns {object} A complete, valid state object.
@@ -169,7 +238,7 @@ function normalizeState(value) {
       ? source.selectedDayIndex
       : DEFAULT_STATE.selectedDayIndex,
     status: isValidStatus(source.status) ? source.status : DEFAULT_STATE.status,
-    data: isForecastData(source.data) ? source.data : null,
+    data: isForecastData(source.data) ? deepClone(source.data) : null,
     error:
       typeof source.error === 'string' && source.error.trim() !== ''
         ? source.error
@@ -324,12 +393,25 @@ export function persist(state, storage = undefined) {
 }
 
 /**
+ * How many updates a single `setState` call may cascade through.
+ *
+ * A subscriber that answers every notification with another update would
+ * otherwise loop forever. The cap keeps the loop finite; the surplus
+ * updates are dropped and reported.
+ */
+const MAX_CASCADING_UPDATES = 50;
+
+/**
  * Creates an observable store.
  *
  * The store keeps a single state object and notifies its subscribers
  * whenever that object changes. It is deliberately tiny: no middleware, no
  * action types, no batching — the app has one state and one place that
  * changes it.
+ *
+ * The state the store keeps is private: `getState` and the subscribers
+ * receive protected snapshots, so nobody can change what the store holds
+ * from the outside.
  *
  * @param {object} [initial] Initial state. Missing or invalid fields fall
  *   back to {@link DEFAULT_STATE}.
@@ -339,44 +421,107 @@ export function persist(state, storage = undefined) {
 export function createStore(initial = DEFAULT_STATE) {
   let state = normalizeState(initial);
   const listeners = new Set();
+  let isNotifying = false;
+  const pendingUpdates = [];
 
   /**
    * Reads the current state.
    *
-   * A copy is returned, so a caller cannot change the state by accident;
-   * the nested objects it holds are shared and must be treated as read-only.
+   * A protected snapshot is returned: the nested `location` and `data` are
+   * copied, so a caller cannot change the state by accident — neither at
+   * the top level nor inside the forecast.
    *
-   * @returns {object} The current state.
+   * @returns {object} A snapshot of the current state.
    */
   function getState() {
-    return { ...state };
+    return snapshotState(state);
+  }
+
+  /**
+   * Merges a partial state into the current one.
+   *
+   * Invalid fields fall back to their default instead of being stored, so
+   * the state always holds usable values.
+   *
+   * @param {object} partial Fields to change.
+   * @returns {{next: object, previous: object}} The new and the old state.
+   */
+  function applyUpdate(partial) {
+    const previous = state;
+    state = normalizeState({ ...state, ...partial });
+
+    return { next: state, previous };
+  }
+
+  /**
+   * Tells every subscriber about a change.
+   *
+   * The pair of states is fixed for the whole cycle, so every subscriber
+   * of this cycle sees the same "this is new, that was old" — even when a
+   * subscriber changes the state again while being notified. Each
+   * subscriber gets its own snapshot, so one of them cannot corrupt what
+   * the others receive.
+   *
+   * @param {object} next The new state.
+   * @param {object} previous The state before the change.
+   */
+  function notify(next, previous) {
+    for (const listener of [...listeners]) {
+      try {
+        listener(snapshotState(next), snapshotState(previous));
+      } catch (error) {
+        // A broken subscriber must not keep the other ones from updating.
+        console.error('State subscriber failed:', error);
+      }
+    }
   }
 
   /**
    * Merges a partial state into the current one and notifies the
    * subscribers.
    *
-   * Invalid fields fall back to their default instead of being stored, so
-   * the state always holds usable values.
+   * A call that comes from inside a notification (a subscriber that
+   * updates the state while it is being told about a change) is queued:
+   * it is applied once the current cycle is over, so the subscribers of
+   * this cycle all see a consistent pair of states.
    *
    * @param {object} partial Fields to change.
-   * @returns {object} The new state.
+   * @returns {object} A snapshot of the new state.
    */
   function setState(partial) {
     if (!partial || typeof partial !== 'object') {
       return getState();
     }
 
-    const previous = state;
-    state = normalizeState({ ...state, ...partial });
+    if (isNotifying) {
+      // Reentrant call: hold it back until the current cycle is done.
+      pendingUpdates.push(partial);
+      return getState();
+    }
 
-    for (const listener of [...listeners]) {
-      try {
-        listener(state, previous);
-      } catch (error) {
-        // A broken subscriber must not keep the other ones from updating.
-        console.error('State subscriber failed:', error);
+    isNotifying = true;
+    try {
+      const { next, previous } = applyUpdate(partial);
+      notify(next, previous);
+
+      let cascaded = 0;
+      while (pendingUpdates.length > 0) {
+        if (cascaded >= MAX_CASCADING_UPDATES) {
+          console.error(
+            'State: too many cascading updates, the rest were dropped.',
+          );
+          pendingUpdates.length = 0;
+          break;
+        }
+
+        const queued = pendingUpdates.shift();
+        const update = applyUpdate(queued);
+        notify(update.next, update.previous);
+        cascaded += 1;
       }
+    } finally {
+      isNotifying = false;
+      pendingUpdates.length = 0;
     }
 
     return getState();
@@ -384,6 +529,9 @@ export function createStore(initial = DEFAULT_STATE) {
 
   /**
    * Registers a function called on every state change.
+   *
+   * The subscriber receives the new and the previous state as protected
+   * snapshots: it may read them, but not change what the store holds.
    *
    * @param {(state: object, previousState: object) => void} listener
    *   Function to call.
