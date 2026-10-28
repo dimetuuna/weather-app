@@ -134,7 +134,8 @@ if (unitsRoot) {
   initUnitsDropdown(unitsRoot, {
     getState: () => store.getState(),
     setState: (partial) => store.setState(partial),
-    onChange: (units) => {
+    onChange: (nextState) => {
+      const units = nextState?.units ?? store.getState().units;
       persist(store.getState());
       const loc = store.getState().location;
       if (loc) {
