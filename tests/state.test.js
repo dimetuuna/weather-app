@@ -64,6 +64,7 @@ describe('js/state.js', () => {
       expect(DEFAULT_STATE).toEqual({
         location: null,
         units: 'metric',
+        timeFormat: '24h',
         selectedDayIndex: 0,
         status: 'idle',
         data: null,
@@ -73,7 +74,7 @@ describe('js/state.js', () => {
     });
 
     it('stores the preferences under the documented keys', () => {
-      expect(STORAGE_KEYS).toEqual({ units: 'units', lastLocation: 'lastLocation' });
+      expect(STORAGE_KEYS).toEqual({ units: 'units', lastLocation: 'lastLocation', timeFormat: 'timeFormat' });
     });
   });
 
@@ -144,6 +145,7 @@ describe('js/state.js', () => {
       expect(store.getState()).toEqual({
         location: null,
         units: 'metric',
+        timeFormat: '24h',
         selectedDayIndex: 0,
         status: 'idle',
         data: null,
@@ -164,6 +166,7 @@ describe('js/state.js', () => {
       expect(store.getState()).toEqual({
         location: null,
         units: 'imperial',
+        timeFormat: '24h',
         selectedDayIndex: 0,
         status: 'idle',
         data: null,
@@ -180,6 +183,7 @@ describe('js/state.js', () => {
       expect(store.getState()).toEqual({
         location: null,
         units: 'imperial',
+        timeFormat: '24h',
         selectedDayIndex: 0,
         status: 'loading',
         data: null,
@@ -593,7 +597,7 @@ describe('js/state.js', () => {
     it('answers with the defaults when nothing was stored', () => {
       const storage = createStorage();
 
-      expect(loadPersisted(storage)).toEqual({ units: 'metric', location: null });
+      expect(loadPersisted(storage)).toEqual({ units: 'metric', location: null, timeFormat: null });
     });
 
     it('reads the stored unit system and location', () => {
@@ -602,7 +606,7 @@ describe('js/state.js', () => {
         [STORAGE_KEYS.lastLocation]: JSON.stringify(BERLIN),
       });
 
-      expect(loadPersisted(storage)).toEqual({ units: 'imperial', location: BERLIN });
+      expect(loadPersisted(storage)).toEqual({ units: 'imperial', location: BERLIN, timeFormat: null });
     });
 
     it('falls back to metric for an invalid stored unit system', () => {
@@ -648,7 +652,7 @@ describe('js/state.js', () => {
     });
 
     it('answers with the defaults when there is no storage', () => {
-      expect(loadPersisted(null)).toEqual({ units: 'metric', location: null });
+      expect(loadPersisted(null)).toEqual({ units: 'metric', location: null, timeFormat: null });
     });
 
     it('survives a storage that refuses to read', () => {
@@ -660,7 +664,7 @@ describe('js/state.js', () => {
       };
 
       expect(() => loadPersisted(storage)).not.toThrow();
-      expect(loadPersisted(storage)).toEqual({ units: 'metric', location: null });
+      expect(loadPersisted(storage)).toEqual({ units: 'metric', location: null, timeFormat: null });
     });
   });
 

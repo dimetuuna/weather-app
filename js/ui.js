@@ -130,6 +130,19 @@ function formatDate(value, options, fallback = PLACEHOLDER) {
   return date ? new Intl.DateTimeFormat('en-US', options).format(date) : fallback;
 }
 
+function formatHour(value, timeFormat = '24h') {
+  const date = parseLocalDate(value);
+  if (!date) {
+    return PLACEHOLDER;
+  }
+  const hour12 = timeFormat === '12h';
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12,
+  }).format(date);
+}
+
 function dateKey(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)
     ? value.slice(0, 10)
@@ -342,11 +355,12 @@ export function renderHourly(state = {}, root = globalThis.document) {
     const info = getWeatherInfo(valueAt(codes, index));
     const item = createElement(document, 'li', 'hourly__item');
     const icon = createWeatherIcon(document, 'hourly__icon', info);
+    const timeFormat = state?.timeFormat === '12h' ? '12h' : '24h';
     const hour = createElement(
       document,
       'span',
       'hourly__time',
-      formatDate(time, { hour: 'numeric' }),
+      formatHour(time, timeFormat),
     );
     const temperature = createElement(document, 'span', 'hourly__temperature');
 

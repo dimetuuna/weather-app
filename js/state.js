@@ -27,6 +27,7 @@ import { UNITS } from './units.js';
 export const STORAGE_KEYS = Object.freeze({
   units: 'units',
   lastLocation: 'lastLocation',
+  timeFormat: 'timeFormat',
 });
 
 /**
@@ -47,6 +48,7 @@ export const STATUSES = Object.freeze(['idle', 'loading', 'success', 'empty', 'e
 export const DEFAULT_STATE = Object.freeze({
   location: null,
   units: 'metric',
+  timeFormat: '24h',
   selectedDayIndex: 0,
   status: 'idle',
   data: null,
@@ -65,6 +67,10 @@ export const DEFAULT_STATE = Object.freeze({
  */
 export function isValidUnits(value) {
   return typeof value === 'string' && Object.hasOwn(UNITS, value);
+}
+
+export function isValidTimeFormat(value) {
+  return value === '12h' || value === '24h';
 }
 
 /**
@@ -194,6 +200,7 @@ function snapshotState(state) {
   return {
     location: deepClone(state.location),
     units: state.units,
+    timeFormat: state.timeFormat,
     selectedDayIndex: state.selectedDayIndex,
     status: state.status,
     data: deepClone(state.data),
@@ -238,6 +245,7 @@ function normalizeState(value) {
   return {
     location: normalizeLocation(source.location),
     units: isValidUnits(source.units) ? source.units : DEFAULT_STATE.units,
+    timeFormat: isValidTimeFormat(source.timeFormat) ? source.timeFormat : DEFAULT_STATE.timeFormat,
     selectedDayIndex: isValidDayIndex(source.selectedDayIndex)
       ? source.selectedDayIndex
       : DEFAULT_STATE.selectedDayIndex,
@@ -361,7 +369,10 @@ export function loadPersisted(storage = undefined) {
   const rawLocation = readItem(store, STORAGE_KEYS.lastLocation);
   const location = rawLocation === null ? null : normalizeLocation(safeParse(rawLocation));
 
-  return { units, location };
+  const rawTimeFormat = readItem(store, STORAGE_KEYS.timeFormat);
+  const timeFormat = isValidTimeFormat(rawTimeFormat) ? rawTimeFormat : null;
+
+  return { units, location, timeFormat };
 }
 
 /**
@@ -387,6 +398,10 @@ export function persist(state, storage = undefined) {
   const source = state && typeof state === 'object' ? state : {};
   const units = isValidUnits(source.units) ? source.units : DEFAULT_STATE.units;
   let written = writeItem(store, STORAGE_KEYS.units, units);
+
+  if (isValidTimeFormat(source.timeFormat)) {
+    written = writeItem(store, STORAGE_KEYS.timeFormat, source.timeFormat) || written;
+  }
 
   const location = normalizeLocation(source.location);
   if (location && location.name.trim() !== '') {

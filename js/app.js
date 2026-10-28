@@ -14,6 +14,34 @@ import { initUnitsDropdown } from './ui.js';
 
 const root = document;
 
+// European countries use 24-hour time by default; most of the rest of the
+// world defaults to 12-hour. The list is matched against the country name
+// returned by Open-Meteo (English).
+const EUROPEAN_COUNTRIES = new Set([
+  'Albania', 'Andorra', 'Austria', 'Belarus', 'Belgium', 'Bosnia and Herzegovina',
+  'Bulgaria', 'Croatia', 'Cyprus', 'Czechia', 'Denmark', 'Estonia', 'Finland',
+  'France', 'Germany', 'Greece', 'Hungary', 'Iceland', 'Ireland', 'Italy',
+  'Kosovo', 'Latvia', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Malta',
+  'Moldova', 'Monaco', 'Montenegro', 'Netherlands', 'North Macedonia', 'Norway',
+  'Poland', 'Portugal', 'Romania', 'Russia', 'San Marino', 'Serbia', 'Slovakia',
+  'Slovenia', 'Spain', 'Sweden', 'Switzerland', 'Turkey', 'Ukraine',
+  'United Kingdom', 'Vatican City',
+]);
+
+function detectTimeFormat(country) {
+  if (typeof country === 'string' && country.trim() !== '') {
+    return EUROPEAN_COUNTRIES.has(country.trim()) ? '24h' : '12h';
+  }
+  // Fall back to the browser/OS preferred hour cycle when no country is known.
+  try {
+    const hourCycle = new Intl.DateTimeFormat(undefined, { hour: 'numeric' })
+      .resolvedOptions().hourCycle;
+    return hourCycle === 'h12' ? '12h' : '24h';
+  } catch {
+    return '24h';
+  }
+}
+
 function $(selector) {
   return root.querySelector(selector);
 }
@@ -28,6 +56,7 @@ const searchRoot = $('.search');
 const unitsRoot = $('.units');
 const statusRoot = $('#status');
 const hourlySelect = $('#hourly-day');
+const timeToggle = $('[data-time-toggle]');
 
 let lastFetch = null; // { kind: 'coords'|'location', payload }
 
@@ -82,6 +111,24 @@ if (hourlySelect) {
   });
 }
 
+// Time format toggle (12h / 24h)
+function syncTimeToggle() {
+  if (!timeToggle) return;
+  const tf = store.getState().timeFormat;
+  timeToggle.textContent = tf === '12h' ? '12h' : '24h';
+  timeToggle.setAttribute('aria-pressed', String(tf === '12h'));
+}
+if (timeToggle) {
+  timeToggle.addEventListener('click', () => {
+    const current = store.getState().timeFormat;
+    const next = current === '12h' ? '24h' : '12h';
+    store.setState({ timeFormat: next });
+    persist(store.getState());
+    syncTimeToggle();
+  });
+}
+store.subscribe(syncTimeToggle);
+
 // Units dropdown
 if (unitsRoot) {
   initUnitsDropdown(unitsRoot, {
@@ -132,10 +179,17 @@ function retryFetch() {
 
 async function boot() {
   const persisted = loadPersisted();
+  // Auto-detect 12h/24h if the user never chose one: 24h in Europe, 12h
+  // elsewhere (based on the location's country; falls back to the browser
+  // locale's hour cycle when no country is known).
+  let timeFormat = persisted.timeFormat;
+  if (!timeFormat) {
+    timeFormat = detectTimeFormat(persisted.location?.country);
+  }
   if (persisted.location) {
-    store.setState({ location: persisted.location, units: persisted.units });
+    store.setState({ location: persisted.location, units: persisted.units, timeFormat });
   } else {
-    store.setState({ units: persisted.units });
+    store.setState({ units: persisted.units, timeFormat });
   }
 
   // Try geolocation first

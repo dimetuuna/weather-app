@@ -150,8 +150,11 @@
           <div class="hourly__header">
             <h2 class="hourly__title" id="hourly-title">Hourly forecast</h2>
 
-            <label class="visually-hidden" for="hourly-day">Select forecast day</label>
-            <select class="hourly__select" id="hourly-day" data-hourly-day></select>
+            <div class="hourly__controls">
+              <label class="visually-hidden" for="hourly-day">Select forecast day</label>
+              <select class="hourly__select" id="hourly-day" data-hourly-day></select>
+              <button class="time-toggle" type="button" data-time-toggle aria-pressed="false">24h</button>
+            </div>
           </div>
 
           <ul class="hourly__list" data-hourly-list role="list"></ul>

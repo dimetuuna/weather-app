@@ -7,7 +7,7 @@ const { weatherCodes, getWeatherInfo } = weatherCodesModule;
 // app will resolve them at build time.
 const AVAILABLE_ICONS = new Set(
   Object.keys(
-    import.meta.glob('../assets/images/*.webp', {
+    import.meta.glob('../public/assets/images/*.webp', {
       eager: true,
       query: '?url',
       import: 'default',
