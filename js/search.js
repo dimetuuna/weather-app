@@ -76,7 +76,7 @@ export function initSearch(root, options = {}) {
       const meta = document.createElement('span');
       meta.className = 'search__suggestion-meta';
       const parts = [result.admin1, result.country].filter(Boolean);
-      meta.textContent = parts.join(', ');
+      meta.textContent = parts.length ? ` ${parts.join(', ')}` : '';
       item.append(name, meta);
       item.addEventListener('click', () => selectResult(result));
       list.append(item);

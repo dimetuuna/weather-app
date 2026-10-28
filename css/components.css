@@ -189,6 +189,15 @@
   background-color: var(--color-surface-strong);
 }
 
+.search__suggestion-name {
+  font-weight: var(--font-weight-medium);
+}
+
+.search__suggestion-meta {
+  color: var(--color-neutral-300);
+  font-size: var(--font-size-sm);
+}
+
 @media (min-width: 768px) {
   .search {
     grid-template-columns: minmax(0, 1fr) auto;
