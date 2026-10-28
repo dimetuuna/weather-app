@@ -41,3 +41,4 @@ Thumbs.db
 
 # Tooling artifacts
 /.playwright-mcp
+.vercel

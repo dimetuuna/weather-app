@@ -37,7 +37,7 @@
 
 @font-face {
   font-family: 'DM Sans';
-  src: url('../assets/fonts/DM_Sans/DMSans-VariableFont_opsz,wght.ttf') format('truetype');
+  src: url('/assets/fonts/DM_Sans/DMSans-VariableFont_opsz,wght.ttf') format('truetype');
   font-weight: 100 1000;
   font-style: normal;
   font-display: swap;
@@ -45,7 +45,7 @@
 
 @font-face {
   font-family: 'DM Sans';
-  src: url('../assets/fonts/DM_Sans/DMSans-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  src: url('/assets/fonts/DM_Sans/DMSans-Italic-VariableFont_opsz,wght.ttf') format('truetype');
   font-weight: 100 1000;
   font-style: italic;
   font-display: swap;
@@ -53,7 +53,7 @@
 
 @font-face {
   font-family: 'Bricolage Grotesque';
-  src: url('../assets/fonts/Bricolage_Grotesque/static/BricolageGrotesque-Bold.ttf') format('truetype');
+  src: url('/assets/fonts/Bricolage_Grotesque/static/BricolageGrotesque-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
