@@ -39,6 +39,8 @@ export function initSearch(root, options = {}) {
   let activeIndex = -1;
   let currentResults = [];
   let abortController = null;
+  let lastSelectedCity = '';
+  let lastSelectedLabel = '';
 
   input.setAttribute('role', 'combobox');
   input.setAttribute('aria-autocomplete', 'list');
@@ -95,7 +97,13 @@ export function initSearch(root, options = {}) {
 
   function selectResult(result) {
     clearSuggestions();
-    input.value = result.name;
+    const parts = [result.admin1, result.country].filter(Boolean);
+    const label = parts.length
+      ? `${result.name} ${parts.join(', ')}`
+      : result.name;
+    input.value = label;
+    lastSelectedCity = result.name;
+    lastSelectedLabel = label;
     input.blur();
     if (typeof onSelect === 'function') {
       onSelect(result);
@@ -126,7 +134,12 @@ export function initSearch(root, options = {}) {
   }
 
   async function runSearch(query) {
-    const trimmed = query.trim();
+    // If the box still holds a previously selected full label, search by the
+    // city name only so we don't send "A Coruña Galicia, Spain" to the API.
+    let trimmed = query.trim();
+    if (trimmed !== '' && trimmed === lastSelectedLabel && lastSelectedCity) {
+      trimmed = lastSelectedCity;
+    }
     if (trimmed === '') {
       clearSuggestions();
       return;
