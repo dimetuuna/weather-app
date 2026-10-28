@@ -78,6 +78,11 @@ export function initSearch(root, options = {}) {
       const parts = [result.admin1, result.country].filter(Boolean);
       meta.textContent = parts.length ? ` ${parts.join(', ')}` : '';
       item.append(name, meta);
+      // Prevent the input from blurring before the click registers (important
+      // on touch devices and some browsers where blur cancels the click).
+      item.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+      });
       item.addEventListener('click', () => selectResult(result));
       list.append(item);
     }
