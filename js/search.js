@@ -226,6 +226,18 @@ export function initSearch(root, options = {}) {
     setTimeout(clearSuggestions, 150);
   });
 
+  const form = root.matches?.('[data-search-form]') ? root : (root.querySelector('[data-search-form]') || root.querySelector('form.search') || root.closest('form'));
+  if (form) {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (activeIndex >= 0 && currentResults[activeIndex]) {
+        selectResult(currentResults[activeIndex]);
+      } else {
+        runSearch(input.value);
+      }
+    });
+  }
+
   if (submit) {
     submit.addEventListener('click', (event) => {
       event.preventDefault();

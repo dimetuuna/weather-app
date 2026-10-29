@@ -270,4 +270,7 @@ if (retryBtn) {
 
 // Initial render + boot
 render();
-boot();
+boot().catch((error) => {
+  console.error('Boot failed:', error);
+  store.setState({ status: 'error', error: 'Could not load weather data' });
+});
