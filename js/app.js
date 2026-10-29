@@ -60,21 +60,45 @@ const timeToggle = $('[data-time-toggle]');
 
 let lastFetch = null; // { kind: 'coords'|'location', payload }
 
+let currentFetchController = null;
+
 async function fetchWeather(location, units) {
+  // Cancel any in-flight request so a slow earlier fetch cannot overwrite a
+  // newer one (race condition when the user searches/switches quickly).
+  if (currentFetchController) {
+    currentFetchController.abort();
+  }
+  const controller = new AbortController();
+  currentFetchController = controller;
+  const { signal } = controller;
+
   store.setState({ status: 'loading', error: null });
   try {
     const data =
       location && location.lat !== null && location.lat !== undefined
       && location.lon !== null && location.lon !== undefined
       && !location.name
-        ? await fetchByCoords(location.lat, location.lon, units)
-        : await fetchForecast(location.lat, location.lon, units);
+        ? await fetchByCoords(location.lat, location.lon, units, { signal })
+        : await fetchForecast(location.lat, location.lon, units, { signal });
+    if (controller !== currentFetchController) {
+      return; // superseded
+    }
     store.setState({ data, status: 'success', error: null });
   } catch (error) {
+    if (error && error.name === 'AbortError') {
+      return; // superseded by a newer request
+    }
+    if (controller !== currentFetchController) {
+      return;
+    }
     store.setState({
       status: 'error',
       error: error && error.message ? error.message : 'Something went wrong',
     });
+  } finally {
+    if (controller === currentFetchController) {
+      currentFetchController = null;
+    }
   }
 }
 
@@ -214,10 +238,12 @@ async function boot() {
       // geolocation location has no name; keep lastLocation if present
       const current = store.getState().location;
       const loc = current || coords;
-      // If no persisted location, use coords (nameless) — won't be persisted
+      // If no persisted location, use coords (nameless) - won't be persisted
       if (!current) {
         store.setState({ location: coords });
       }
+      // A precise location is available now; drop any stale IP-based cache.
+      try { sessionStorage.removeItem('ipLocationCache'); } catch { /* ignore */ }
       lastFetch = { kind: 'coords', payload: coords };
       fetchWeather(coords, store.getState().units);
       return;

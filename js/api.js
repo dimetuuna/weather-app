@@ -311,7 +311,7 @@ export const fetchByCoords = fetchForecast;
  * @returns {Promise<{name: string, country: string, lat: number, lon: number} | null>}
  */
 const IP_CACHE_KEY = 'ipLocationCache';
-const IP_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const IP_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function readIpCache() {
   try {
