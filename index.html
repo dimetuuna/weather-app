@@ -95,7 +95,7 @@
         <section class="current" aria-labelledby="current-title">
           <h2 class="visually-hidden" id="current-title">Current weather</h2>
 
-          <article class="current__card">
+          <article class="current__card" aria-live="polite" aria-atomic="true">
             <div class="current__meta">
               <h3 class="current__location" data-current-location>Current location</h3>
               <p class="current__date" data-current-date></p>
@@ -153,7 +153,7 @@
             <div class="hourly__controls">
               <label class="visually-hidden" for="hourly-day">Select forecast day</label>
               <select class="hourly__select" id="hourly-day" data-hourly-day></select>
-              <button class="time-toggle" type="button" data-time-toggle aria-pressed="false">24h</button>
+              <button class="time-toggle" type="button" data-time-toggle aria-pressed="false" aria-label="Toggle 12 or 24 hour time format">24h</button>
             </div>
           </div>
 

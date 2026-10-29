@@ -82,6 +82,7 @@ export function initSearch(root, options = {}) {
       item.append(name, meta);
       // Prevent the input from blurring before the click registers (important
       // on touch devices and some browsers where blur cancels the click).
+      item.setAttribute('aria-selected', 'false');
       item.addEventListener('mousedown', (event) => {
         event.preventDefault();
       });
@@ -123,6 +124,7 @@ export function initSearch(root, options = {}) {
     activeIndex = Math.max(-1, Math.min(index, items.length - 1));
     items.forEach((item, i) => {
       item.classList.toggle('is-active', i === activeIndex);
+      item.setAttribute('aria-selected', String(i === activeIndex));
       if (i === activeIndex) {
         item.id = item.id || `search-suggestion-${i}`;
         input.setAttribute('aria-activedescendant', item.id);
