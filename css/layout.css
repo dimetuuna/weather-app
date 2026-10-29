@@ -40,7 +40,7 @@
 }
 
 /* Tablet */
-@media (min-width: 768px) {
+@media (min-width: 48em) {
   .app__header {
     padding-inline: var(--space-6);
   }
@@ -51,7 +51,7 @@
 }
 
 /* Desktop: hourly forecast becomes a right-hand column. */
-@media (min-width: 1024px) {
+@media (min-width: 64em) {
   .app__main {
     grid-template-columns: minmax(0, 1fr) 22rem;
     grid-template-areas:

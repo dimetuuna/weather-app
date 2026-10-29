@@ -6,7 +6,7 @@
  */
 
 import { createStore, loadPersisted, persist } from './state.js';
-import { fetchForecast, fetchByCoords, searchLocations, fetchIpLocation } from './api.js';
+import { fetchForecast, fetchByCoords, fetchIpLocation } from './api.js';
 import { getUnitConfig } from './units.js';
 import { renderApp, renderStatus } from './ui.js';
 import { initSearch } from './search.js';
@@ -64,7 +64,9 @@ async function fetchWeather(location, units) {
   store.setState({ status: 'loading', error: null });
   try {
     const data =
-      location && location.lat != null && location.lon != null && !location.name
+      location && location.lat !== null && location.lat !== undefined
+      && location.lon !== null && location.lon !== undefined
+      && !location.name
         ? await fetchByCoords(location.lat, location.lon, units)
         : await fetchForecast(location.lat, location.lon, units);
     store.setState({ data, status: 'success', error: null });
