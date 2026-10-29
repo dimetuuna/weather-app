@@ -310,7 +310,43 @@ export const fetchByCoords = fetchForecast;
  * @param {{ signal?: AbortSignal }} [options]
  * @returns {Promise<{name: string, country: string, lat: number, lon: number} | null>}
  */
+const IP_CACHE_KEY = 'ipLocationCache';
+const IP_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function readIpCache() {
+  try {
+    if (typeof sessionStorage === 'undefined') return null;
+    const raw = sessionStorage.getItem(IP_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (typeof parsed.cachedAt !== 'number' || Date.now() - parsed.cachedAt > IP_CACHE_TTL_MS) {
+      return null;
+    }
+    const { name, country, lat, lon } = parsed;
+    if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+    return { name: typeof name === 'string' ? name : '', country: typeof country === 'string' ? country : '', lat, lon };
+  } catch {
+    return null;
+  }
+}
+
+function writeIpCache(location) {
+  try {
+    if (typeof sessionStorage === 'undefined' || !location) return;
+    sessionStorage.setItem(IP_CACHE_KEY, JSON.stringify({ ...location, cachedAt: Date.now() }));
+  } catch {
+    // ignore storage failures (private mode, quota, etc.)
+  }
+}
+
 export async function fetchIpLocation({ signal } = {}) {
+  // Serve a fresh cached value to avoid repeated network calls (and 429s).
+  const cached = readIpCache();
+  if (cached) {
+    return cached;
+  }
+
   let response;
   try {
     response = await fetch('https://ipapi.co/json/', { signal });
@@ -337,10 +373,12 @@ export async function fetchIpLocation({ signal } = {}) {
   if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
     return null;
   }
-  return {
+  const location = {
     name: typeof data.city === 'string' && data.city.trim() !== '' ? data.city.trim() : '',
     country: typeof data.country_name === 'string' ? data.country_name.trim() : '',
     lat,
     lon,
   };
+  writeIpCache(location);
+  return location;
 }
