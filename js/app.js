@@ -128,6 +128,7 @@ if (timeToggle) {
   });
 }
 store.subscribe(syncTimeToggle);
+syncTimeToggle();
 
 // Units dropdown
 if (unitsRoot) {
