@@ -194,7 +194,7 @@
 }
 
 .search__suggestion-meta {
-  color: var(--color-neutral-300);
+  color: var(--color-neutral-200);
   font-size: var(--font-size-sm);
 }
 
@@ -462,7 +462,7 @@
 }
 
 .attribution {
-  color: var(--color-neutral-300);
+  color: var(--color-neutral-200);
   font-size: var(--font-size-sm);
   text-align: center;
 }
